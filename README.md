@@ -1,4 +1,4 @@
-# air-mobile-remote-updater
+# air-mobile-remote-executable-updater (REU)
 
 This is an Adobe AIR/ActionScript module (swc) provides remote application update on mobile AIR app
 
@@ -11,6 +11,8 @@ This is an Adobe AIR/ActionScript module (swc) provides remote application updat
 
 ## 远程版本的文件
 
+### 基本格式
+
 文件格式： JSON
 
 文件内容：
@@ -22,7 +24,24 @@ This is an Adobe AIR/ActionScript module (swc) provides remote application updat
 }
 ```
 
+### 纯数值格式
+
 远程文件的版本信息也可以是纯数字，如果是纯数字的话，就需要使用时指定远程swf的更新url
+
+### 强制低版本整包更新格式
+
+REU 支持对低版本的客户进行整包更新，只需要在版本信息文件中增加 `oldestAllowed` (低于这个版本就要整包更新了) 和 `throughlyUpdateUrl` (整包更新的 url)
+
+```
+{
+	"version":21,
+	"url":"http://mdthai.b0.upaiyun.com/remote.swf",
+	"oldestAllowed" : 19,
+	"throughlyUpdateUrl" : "http://you.client.have.to.update.com"
+}
+```
+
+当客户端的版满足整包更新条件时，REU 会中断执行，并抛出 `gama.events.ForceUpdateEvent` 事件
 
 ## Requirement
  * AIR SDK 3.4 and higher
