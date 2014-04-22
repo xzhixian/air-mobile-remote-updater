@@ -2,6 +2,27 @@
 
 This is an Adobe AIR/ActionScript module (swc) provides remote application update on mobile AIR app
 
+这个 swc 针对 FLASH AIR 开发的手机客户端提供自动更新功能。
+
+自动更新的逻辑如下：
+把预装的版本号跟远程的版本比较, 如果远程的比较新，那么把远程的swf 拉到本地缓存，并且更新本地缓存版本号，然后用本地缓存
+中间任何一步出异常，都自动回退，回退的规则是： 远程版本 > 退到本地缓存版本 > 退到预装版本
+
+
+## 远程版本的文件
+
+文件格式： JSON
+
+文件内容：
+
+```
+{
+  "version" : 111,
+  "url" : "http://path/to/remote/swf"
+}
+```
+
+远程文件的版本信息也可以是纯数字，如果是纯数字的话，就需要使用时指定远程swf的更新url
 
 ## Requirement
  * AIR SDK 3.4 and higher
