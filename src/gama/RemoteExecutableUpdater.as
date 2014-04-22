@@ -23,6 +23,8 @@ package gama
 	import flash.utils.ByteArray;
 	import flash.utils.setTimeout;
 
+	import gama.events.ForceUpdateEvent;
+
 	public class RemoteExecutableUpdater
 	{
 		static private const PATH_LOCAL_CACHE_VERSION:String = "gama/reu/version";
@@ -74,6 +76,8 @@ package gama
 		 */
 		static private var _remoteExecutableUrl:String;
 
+		static private var _initParameters:Object;
+
 		/**
 		 * swf内容的加载器
 		 */
@@ -84,9 +88,10 @@ package gama
 		 * @param localVersion
 		 * @param localExecutable
 		 * @param remoteVersionUrl
-		 * @param remoteExecutableUrl [可选] 如果提供这个参数，那么使用所提供的参数，如果不提供，那么尝试使用远端的数据 json 中的 url 属性
+		 * @param initParameters			[可选] 加载时传入的初始化kv数据
+		 * @param customRemoteExecutableUrl [可选] 如果提供这个参数，那么使用所提供的参数，如果不提供，那么尝试使用远端的数据 json 中的 url 属性
 		 */
-		static public function start(localVersion:int, localExecutable:File, remoteVersionUrl:String, remoteExecutableUrl:String = null):void
+		static public function start(localVersion:int, localExecutable:File, remoteVersionUrl:String, initParameters:Object = null, customRemoteExecutableUrl:String = null):void
 		{
 			if(localExecutable == null)
 			{
@@ -118,7 +123,9 @@ package gama
 
 			_remoteVersionUrl = remoteVersionUrl;
 
-			_remoteExecutableUrl = remoteExecutableUrl;
+			_remoteExecutableUrl = customRemoteExecutableUrl;
+
+			_initParameters = initParameters;
 
 			isBusy = true;
 
@@ -155,6 +162,8 @@ package gama
 			_remoteVersionUrl = null;
 			_remoteExecutableUrl = null;
 			_localVersion = 0;
+			_initParameters = null;
+			LOADER_CONTEXT.parameters = null;
 			isBusy = false;
 			if(event)
 			{
@@ -200,8 +209,18 @@ package gama
 					try
 					{
 						var obj:Object = JSON.parse(dataStr) || {};
-						_remoteVersion = parseInt(obj['version'] || obj['ver'] || obj['v'], 10) || 0;
+						_remoteVersion = parseInt(obj['version'] || obj['ver'] || obj['v'], 10) || -1;
 						_remoteExecutableUrl = _remoteExecutableUrl || (obj['url'] || obj['uri'] || obj['swf'] || obj['client'])
+
+						var oldestLocalVersionAllowed:int = parseInt(obj['oldestAllowed'], 10) || -1;
+						var throughlyUpdateUrl:String = String(obj['throughlyUpdateUrl'] || "");
+						if(_localVersion < oldestLocalVersionAllowed && Boolean(throughlyUpdateUrl))
+						{
+							/* 客户端需要整体更新 */
+							setTimeout(end, 1, new ForceUpdateEvent(throughlyUpdateUrl));
+							return;
+						}
+
 					}
 					catch(err:Error)
 					{
@@ -245,6 +264,7 @@ package gama
 		{
 			trace("[RemoteExecutableUpdater.loadPreInstallExecutable]");
 			var ba:ByteArray = readLocalFile(_localExecutable);
+			LOADER_CONTEXT.parameters = _initParameters;
 			loader.loadBytes(ba, LOADER_CONTEXT);
 			loader.contentLoaderInfo.addEventListener(Event.COMPLETE,end);
 			loader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR,end);
@@ -261,6 +281,7 @@ package gama
 			{
 				return loadPreInstallExecutable();
 			}
+			LOADER_CONTEXT.parameters = _initParameters;
 			loader.loadBytes(ba, LOADER_CONTEXT);
 			loader.contentLoaderInfo.addEventListener(Event.COMPLETE,end);
 			loader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, function(event:IOErrorEvent):void{
