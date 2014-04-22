@@ -99,7 +99,7 @@ package gama
 				throw(new Error("non-exist localExecutable:"+localExecutable));
 				return;
 			}
-
+			
 			if(remoteVersionUrl == null)
 			{
 				throw(new Error("bad argument: remoteVersionUrl:"+remoteVersionUrl));
@@ -193,13 +193,8 @@ package gama
 			loader.addEventListener(Event.COMPLETE, function(event:Event):void{
 				trace("[RemoteExecutableUpdater.readRemoteSwfVersion] complet, remote version data:"+loader.data);
 				var dataStr:String = String(loader.data);
-				var looksLikePureNumber:Boolean =  /[^\d\s\n\r]/.test(dataStr);
-				if(looksLikePureNumber)
-				{
-					/* 远端的数据上上去象纯数值 */
-					_remoteVersion = parseInt(dataStr, 10) || 0;
-				}
-				else
+				var looksNotLikePureNumber:Boolean =  /[^\d\s\n\r]/.test(dataStr);
+				if(looksNotLikePureNumber)
 				{
 					/* 认为远端数据是 json */
 					try
@@ -212,6 +207,11 @@ package gama
 					{
 						_remoteVersion = parseInt(dataStr, 10) || 0;
 					}
+				}
+				else  
+				{
+					/* 远端的数据上上去象纯数值 */
+					_remoteVersion = parseInt(dataStr, 10) || 0;
 				}
 
 				setTimeout(compareVersion, 1); /* 跳出栈, 利于gc */
@@ -243,6 +243,7 @@ package gama
 		 */
 		private static function loadPreInstallExecutable():void
 		{
+			trace("[RemoteExecutableUpdater.loadPreInstallExecutable]");
 			var ba:ByteArray = readLocalFile(_localExecutable);
 			loader.loadBytes(ba, LOADER_CONTEXT);
 			loader.contentLoaderInfo.addEventListener(Event.COMPLETE,end);
@@ -254,6 +255,7 @@ package gama
 		 */
 		private static function loadLocalCachedExecutable():void
 		{
+			trace("[RemoteExecutableUpdater.loadLocalCachedExecutable]");
 			var ba:ByteArray = readLocalFile(File.applicationStorageDirectory.resolvePath(PATH_LOCAL_CACHE_EXECUTABLE));
 			if(ba == null)
 			{
@@ -275,6 +277,7 @@ package gama
 		 */
 		private static function loadRemoteExecutable():void
 		{
+			trace("[RemoteExecutableUpdater.loadRemoteExecutable]");
 			var streamer:URLStream = new URLStream;
 			var handleStreamerError:Function = function(event:Event):void{
 				trace("[RemoteExecutableUpdater.loadRemoteExecutable] streamer failed. error:"+event);
