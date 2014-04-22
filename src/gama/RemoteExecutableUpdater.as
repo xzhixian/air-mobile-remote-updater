@@ -99,7 +99,7 @@ package gama
 				throw(new Error("non-exist localExecutable:"+localExecutable));
 				return;
 			}
-			
+
 			if(remoteVersionUrl == null)
 			{
 				throw(new Error("bad argument: remoteVersionUrl:"+remoteVersionUrl));
@@ -208,7 +208,7 @@ package gama
 						_remoteVersion = parseInt(dataStr, 10) || 0;
 					}
 				}
-				else  
+				else
 				{
 					/* 远端的数据上上去象纯数值 */
 					_remoteVersion = parseInt(dataStr, 10) || 0;
@@ -268,6 +268,12 @@ package gama
 				try{
 					loader.unloadAndStop(true);
 				}catch(err:Error){}
+
+				/* drop local cache by reset local cache version */
+				ba.clear();
+				ba.writeUnsignedInt(0);
+				writeToStorageFile(PATH_LOCAL_CACHE_VERSION,ba);
+				ba.clear();
 				setTimeout(loadPreInstallExecutable, 1);
 			}, false, 0, true);
 		}
